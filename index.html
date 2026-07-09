@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SARASTREAM — Resultados en vivo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0A0D12;
+    --surface: #131720;
+    --surface-2: #1B212D;
+    --border: #262D3A;
+    --text: #ECEEF2;
+    --text-dim: #8A93A6;
+    --accent: #FF6A2B;
+    --accent-dim: #4A2A18;
+    --live: #22D3AE;
+    --live-dim: #0F3A32;
+    --radius: 14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{max-width:480px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;padding-bottom:90px;}
+
+  /* Top bar */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 18px 14px;
+  }
+  .brand{display:flex;align-items:baseline;gap:2px;}
+  .brand-mark{font-family:'Space Grotesk';font-weight:700;font-size:22px;letter-spacing:-0.02em;}
+  .brand-mark span{color:var(--accent);}
+  .brand-sub{font-size:10px;color:var(--text-dim);letter-spacing:0.14em;text-transform:uppercase;margin-top:2px;}
+  .topbar-actions{display:flex;gap:8px;}
+  .icon-btn{
+    width:36px;height:36px;border-radius:10px;
+    background:var(--surface);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--text-dim);cursor:pointer;transition:.15s;
+  }
+  .icon-btn:hover{color:var(--text);border-color:var(--accent);}
+  .icon-btn.spinning svg{animation:spin .6s linear;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* Category rail */
+  .cat-rail{
+    display:flex;gap:10px;padding:4px 18px 18px;overflow-x:auto;
+    scrollbar-width:none;
+  }
+  .cat-rail::-webkit-scrollbar{display:none;}
+  .cat-chip{
+    flex:0 0 auto;width:60px;display:flex;flex-direction:column;align-items:center;gap:6px;
+    cursor:pointer;opacity:.55;transition:.15s;
+  }
+  .cat-chip.active{opacity:1;}
+  .cat-chip-icon{
+    width:48px;height:48px;border-radius:50%;
+    background:var(--surface);border:1.5px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    position:relative;font-size:20px;
+  }
+  .cat-chip.active .cat-chip-icon{border-color:var(--accent);background:var(--accent-dim);}
+  .cat-badge{
+    position:absolute;top:-4px;right:-4px;background:var(--accent);color:#0A0D12;
+    font-size:9px;font-weight:700;border-radius:8px;min-width:16px;height:16px;
+    display:flex;align-items:center;justify-content:center;padding:0 3px;
+  }
+  .cat-label{font-size:10.5px;color:var(--text-dim);}
+  .cat-chip.active .cat-label{color:var(--text);}
+
+  /* Filter tabs */
+  .tabs{display:flex;gap:8px;padding:0 18px 16px;overflow-x:auto;scrollbar-width:none;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{
+    flex:0 0 auto;padding:9px 16px;border-radius:20px;font-size:13px;font-weight:600;
+    background:var(--surface);color:var(--text-dim);border:1px solid var(--border);
+    cursor:pointer;white-space:nowrap;transition:.15s;display:flex;align-items:center;gap:6px;
+  }
+  .tab.active{background:var(--accent);color:#0A0D12;border-color:var(--accent);}
+
+  /* Match list */
+  .match-list{padding:0 18px;display:flex;flex-direction:column;gap:12px;}
+  .match-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:14px 16px;position:relative;overflow:hidden;
+  }
+  .match-card.is-live{border-color:var(--live-dim);}
+  .match-eyebrow{
+    display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-dim);
+    margin-bottom:12px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;
+  }
+  .match-eyebrow .league-dot{width:5px;height:5px;border-radius:50%;background:var(--text-dim);}
+  .teams-row{display:flex;align-items:center;justify-content:space-between;}
+  .team{display:flex;flex-direction:column;align-items:center;gap:8px;width:34%;}
+  .team-badge{
+    width:46px;height:46px;border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Space Grotesk';font-weight:700;font-size:15px;
+    background:var(--surface-2);border:1px solid var(--border);
+  }
+  .team-name{font-size:12.5px;font-weight:600;text-align:center;line-height:1.25;}
+  .mid-col{width:32%;display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .live-pill{
+    display:flex;align-items:center;gap:5px;color:var(--live);font-size:10.5px;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;
+  }
+  .live-dot{width:6px;height:6px;border-radius:50%;background:var(--live);position:relative;}
+  .live-dot::after{
+    content:'';position:absolute;inset:-4px;border-radius:50%;border:1px solid var(--live);
+    animation:pulse 1.6s ease-out infinite;
+  }
+  @keyframes pulse{0%{transform:scale(.6);opacity:.9;}100%{transform:scale(2.1);opacity:0;}}
+  .score{font-family:'JetBrains Mono';font-weight:700;font-size:19px;letter-spacing:-0.02em;}
+  .clock{font-family:'JetBrains Mono';font-size:12.5px;color:var(--text-dim);}
+  .clock.count-up{color:var(--live);}
+  .vs-label{font-family:'Space Grotesk';font-size:13px;color:var(--text-dim);font-weight:600;}
+  .status-final{font-size:10.5px;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+
+  .empty{
+    padding:60px 24px;text-align:center;color:var(--text-dim);font-size:13.5px;
+  }
+
+  /* Bottom nav */
+  .bottomnav{
+    position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;
+    background:linear-gradient(180deg, rgba(10,13,18,0) 0%, var(--bg) 30%);
+    padding:26px 18px 18px;display:flex;justify-content:space-around;
+  }
+  .nav-item{display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--text-dim);font-size:11px;font-weight:600;cursor:pointer;}
+  .nav-item.active{color:var(--accent);}
+  .nav-icon{width:22px;height:22px;}
+
+  .disclaimer{
+    margin:0 18px 10px;padding:10px 12px;background:var(--surface);border:1px dashed var(--border);
+    border-radius:10px;font-size:11px;color:var(--text-dim);line-height:1.5;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">
+      <div>
+        <div class="brand-mark">SARA<span>STREAM</span></div>
+        <div class="brand-sub">Resultados en vivo</div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <div class="icon-btn" id="refreshBtn" title="Actualizar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </div>
+      <div class="icon-btn" title="Buscar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="cat-rail" id="catRail"></div>
+
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-filter="all">Todos</div>
+    <div class="tab" data-filter="live">En vivo</div>
+    <div class="tab" data-filter="upcoming">Próximos</div>
+    <div class="tab" data-filter="finished">Finalizados</div>
+  </div>
+
+  <div class="disclaimer">
+    Datos en vivo desde TheSportsDB (API gratuita). Se actualiza sola cada 30 segundos, o toca el botón de refrescar arriba.
+  </div>
+
+  <div class="match-list" id="matchList"></div>
+
+  <div class="bottomnav">
+    <div class="nav-item active">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/></svg>
+      Deportes
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      Categorías
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   1) DATOS
+   ------------------------------------------------------------
+   Estructura de cada partido. status: "live" | "upcoming" | "finished"
+   Reemplaza este arreglo por el resultado de una API real (ver nota final).
+   ============================================================ */
+const CATEGORIES = [
+  {id:'all', label:'Todos', icon:'🏆'},
+  {id:'basketball', label:'Basket', icon:'🏀'},
+  {id:'baseball', label:'Béisbol', icon:'⚾'},
+  {id:'football', label:'Fútbol', icon:'⚽'},
+];
+
+let GAMES = [];
+
+/* Ligas que consultamos en TheSportsDB (endpoint gratuito, key de prueba "3").
+   id = liga interna de TheSportsDB, sport = nuestra categoría, label = texto mostrado. */
+const LEAGUES = [
+  {id:4387, sport:'basketball', label:'NBA'},
+  {id:4424, sport:'baseball',  label:'MLB'},
+  {id:4346, sport:'football',  label:'Liga 1 Perú'},
+];
+
+function hoyISO(){
+  const d = new Date();
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
+function mapEstado(ev){
+  // TheSportsDB no siempre da "live" explícito en el plan gratuito.
+  // Usamos strStatus / strProgress cuando existe, si no comparamos horas.
+  const s = (ev.strStatus||'').toLowerCase();
+  if(s.includes('live') || s.includes('in progress') || s.includes('1h') || s.includes('2h')) return 'live';
+  if(s.includes('ft') || s.includes('finished') || s.includes('final') || s.includes('match finished')) return 'finished';
+  if(ev.intHomeScore!==null && ev.intAwayScore!==null && ev.strStatus==='') return 'finished';
+  return 'upcoming';
+}
+
+async function cargarPartidos(){
+  const fecha = hoyISO();
+  const resultados = [];
+  let huboError = false;
+
+  await Promise.all(LEAGUES.map(async (liga)=>{
+    try{
+      const url = `https://www.thesportsdb.com/api/v1/json/123/eventsday.php?d=${fecha}&l=${liga.id}`;
+      const res = await fetch(url);
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if(!data.events) return;
+
+      data.events.forEach(ev=>{
+        resultados.push({
+          id: ev.idEvent,
+          sport: liga.sport,
+          league: liga.label,
+          teamA: (ev.strHomeTeam||'').slice(0,3).toUpperCase(),
+          teamB: (ev.strAwayTeam||'').slice(0,3).toUpperCase(),
+          nameA: ev.strHomeTeam,
+          nameB: ev.strAwayTeam,
+          status: mapEstado(ev),
+          clock: ev.strProgress || ev.strTime || '',
+          startsAt: ev.strTime ? ev.strTime.slice(0,5) : '--:--',
+          scoreA: ev.intHomeScore,
+          scoreB: ev.intAwayScore,
+        });
+      });
+    }catch(err){
+      huboError = true;
+      console.error('Error cargando', liga.label, err);
+    }
+  }));
+
+  GAMES = resultados;
+  renderCategories();
+  renderMatches();
+
+  const list = document.getElementById('matchList');
+  if(huboError && resultados.length===0){
+    list.innerHTML = `<div class="empty">No se pudo conectar con la API de resultados.<br>Revisa tu conexión o vuelve a intentar en unos segundos.</div>`;
+  } else if(resultados.length===0){
+    list.innerHTML = `<div class="empty">Hoy no hay partidos programados en estas ligas.</div>`;
+  }
+}
+
+/* ============================================================
+   2) ESTADO
+   ============================================================ */
+let activeCategory = 'all';
+let activeFilter = 'all';
+
+/* ============================================================
+   3) RENDER: rail de categorías
+   ============================================================ */
+function countFor(catId){
+  if(catId==='all') return GAMES.length;
+  return GAMES.filter(g=>g.sport===catId).length;
+}
+
+function renderCategories(){
+  const rail = document.getElementById('catRail');
+  rail.innerHTML = CATEGORIES.map(c => `
+    <div class="cat-chip ${c.id===activeCategory?'active':''}" data-cat="${c.id}">
+      <div class="cat-chip-icon">
+        ${c.icon}
+        <div class="cat-badge">${countFor(c.id)}</div>
+      </div>
+      <div class="cat-label">${c.label}</div>
+    </div>
+  `).join('');
+
+  rail.querySelectorAll('.cat-chip').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      activeCategory = el.dataset.cat;
+      renderCategories();
+      renderMatches();
+    });
+  });
+}
+
+/* ============================================================
+   4) RENDER: tarjetas de partidos
+   ============================================================ */
+function filteredGames(){
+  return GAMES.filter(g=>{
+    const catOk = activeCategory==='all' || g.sport===activeCategory;
+    const filterOk = activeFilter==='all' || g.status===activeFilter;
+    return catOk && filterOk;
+  });
+}
+
+function initials(code){ return code; }
+
+function renderMatches(){
+  const list = document.getElementById('matchList');
+  const games = filteredGames();
+
+  if(games.length===0){
+    list.innerHTML = `<div class="empty">No hay partidos en esta categoría todavía.</div>`;
+    return;
+  }
+
+  list.innerHTML = games.map(g=>{
+    const sA = g.scoreA ?? '-';
+    const sB = g.scoreB ?? '-';
+    let midHtml = '';
+    if(g.status==='live'){
+      midHtml = `
+        <div class="live-pill"><span class="live-dot"></span>Live</div>
+        <div class="score">${sA} – ${sB}</div>
+        <div class="clock count-up">${g.clock||''}</div>
+      `;
+    } else if(g.status==='upcoming'){
+      midHtml = `
+        <div class="vs-label">VS</div>
+        <div class="clock">${g.startsAt}</div>
+      `;
+    } else {
+      midHtml = `
+        <div class="status-final">Final</div>
+        <div class="score">${sA} – ${sB}</div>
+      `;
+    }
+
+    return `
+      <div class="match-card ${g.status==='live'?'is-live':''}">
+        <div class="match-eyebrow"><span class="league-dot"></span>${g.league}</div>
+        <div class="teams-row">
+          <div class="team">
+            <div class="team-badge">${initials(g.teamA)}</div>
+            <div class="team-name">${g.nameA}</div>
+          </div>
+          <div class="mid-col">${midHtml}</div>
+          <div class="team">
+            <div class="team-badge">${initials(g.teamB)}</div>
+            <div class="team-name">${g.nameB}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ============================================================
+   5) TABS (Todos / En vivo / Próximos / Finalizados)
+   ============================================================ */
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    activeFilter = tab.dataset.filter;
+    renderMatches();
+  });
+});
+
+/* ============================================================
+   6) BOTÓN ACTUALIZAR (simulado)
+   ============================================================ */
+document.getElementById('refreshBtn').addEventListener('click', function(){
+  this.classList.add('spinning');
+  setTimeout(()=>this.classList.remove('spinning'), 600);
+  cargarPartidos();
+});
+
+/* ============================================================
+   7) INICIO
+   ============================================================ */
+renderCategories();
+cargarPartidos();
+setInterval(cargarPartidos, 30000); // se actualiza sola cada 30 segundos
+
+/* ============================================================
+   NOTA PARA PATRICK — cómo conectar datos reales y legales
+   ------------------------------------------------------------
+   En vez del arreglo GAMES de arriba, puedes traer partidos reales
+   así (ejemplo con TheSportsDB, que tiene un nivel gratuito):
+
+   async function cargarPartidos(){
+     const res = await fetch('https://www.thesportsdb.com/api/v1/json/3/eventsday.php?d=2026-07-09&l=NBA');
+     const data = await res.json();
+     // Transforma data.events al mismo formato que usa GAMES arriba
+     // y vuelve a llamar renderMatches().
+   }
+
+   Para fútbol peruano / ligas específicas, API-Football (api-sports.io)
+   tiene un plan gratuito con límite de peticiones diarias — necesitas
+   registrarte y usar tu propia API key (nunca la subas al repo público,
+   ponla en una variable de entorno o en un backend simple).
+   ============================================================ */
+</script>
+</body>
+</html>
